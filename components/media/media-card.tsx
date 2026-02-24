@@ -39,12 +39,14 @@ interface MediaCardProps {
    *  used for carosuel items within detail pages.
    */
   minimal?: boolean;
+  /** Whether to show a compact card (poster + status toggle only, no metadata overlay) */
+  compact?: boolean;
   /** Optional watchlist item for status toggle */
   watchlistItem?: WatchlistItem;
   /** Optional callback for status change */
   onStatusChange?: (
     itemId: string,
-    newStatus: "watching" | "waiting" | "finished",
+    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
   ) => void;
   /** Optional episode info for TV shows */
   episodeInfo?: EpisodeInfo | null;
@@ -107,6 +109,7 @@ export const MediaCard = ({
   type,
   rating,
   minimal,
+  compact,
   watchlistItem,
   onStatusChange,
   episodeInfo,
@@ -170,7 +173,8 @@ export const MediaCard = ({
     if (
       watchlistItem &&
       onStatusChange &&
-      (newStatus === "watching" ||
+      (newStatus === "on-my-radar" ||
+        newStatus === "watching" ||
         newStatus === "waiting" ||
         newStatus === "finished")
     ) {
@@ -212,15 +216,22 @@ export const MediaCard = ({
           />
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
             <Icons.play
-              className="text-primary-foreground w-12 h-12 scale-75 group-hover:scale-100 transition-transform duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+              className={cn(
+                "text-primary-foreground scale-75 group-hover:scale-100 transition-transform duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]",
+                compact ? "w-8 h-8" : "w-12 h-12",
+              )}
               strokeWidth={1.5}
             />
           </div>
 
-          {/* Status Toggle Overlay */}
           {watchlistItem && onStatusChange && (
             <div
-              className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className={cn(
+                "absolute z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+                compact
+                  ? "bottom-0 left-0 right-0"
+                  : "top-3 right-3",
+              )}
               onClick={(e) => {
                 e.stopPropagation();
               }}
@@ -229,43 +240,57 @@ export const MediaCard = ({
                 type="single"
                 value={watchlistItem.status}
                 onValueChange={handleStatusChange}
-                className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg p-1 shadow-2xl"
+                className={cn(
+                  "bg-black/70 backdrop-blur-xl border border-white/10 shadow-2xl",
+                  compact
+                    ? "w-full rounded-none border-x-0 border-b-0 p-0.5 gap-0 justify-stretch"
+                    : "rounded-lg p-1",
+                )}
               >
                 <ToggleGroupItem
                   value="watching"
                   aria-label="Watching"
                   size="sm"
                   className={cn(
-                    "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all",
+                    "font-bold uppercase tracking-wider rounded-md transition-all",
+                    compact
+                      ? "flex-1 px-0 py-1 text-[8px] h-auto min-w-0"
+                      : "px-2.5 py-1 text-[10px]",
                     watchlistItem.status === "watching" &&
                       "bg-primary text-primary-foreground shadow-lg",
                   )}
                 >
-                  Watching
+                  {compact ? "Watch" : "Watching"}
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="waiting"
                   aria-label="Waiting"
                   size="sm"
                   className={cn(
-                    "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all",
+                    "font-bold uppercase tracking-wider rounded-md transition-all",
+                    compact
+                      ? "flex-1 px-0 py-1 text-[8px] h-auto min-w-0"
+                      : "px-2.5 py-1 text-[10px]",
                     watchlistItem.status === "waiting" &&
                       "bg-primary text-primary-foreground shadow-lg",
                   )}
                 >
-                  Waiting
+                  Wait
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="finished"
                   aria-label="Finished"
                   size="sm"
                   className={cn(
-                    "px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all",
+                    "font-bold uppercase tracking-wider rounded-md transition-all",
+                    compact
+                      ? "flex-1 px-0 py-1 text-[8px] h-auto min-w-0"
+                      : "px-2.5 py-1 text-[10px]",
                     watchlistItem.status === "finished" &&
                       "bg-primary text-primary-foreground shadow-lg",
                   )}
                 >
-                  Finished
+                  {compact ? "Done" : "Finished"}
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -286,7 +311,6 @@ export const MediaCard = ({
           rating={rating}
           align="center"
         />
-        {/* Episode Indicator */}
         {type === "tv" && item.id && (
           <div className="mt-2">
             <EpisodeIndicator

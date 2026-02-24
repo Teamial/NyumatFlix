@@ -12,7 +12,7 @@ interface WatchlistSectionProps {
   episodeInfoMap: Map<number, EpisodeInfo | null>;
   onStatusChange: (
     itemId: string,
-    newStatus: "watching" | "waiting" | "finished",
+    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
   ) => void;
 }
 

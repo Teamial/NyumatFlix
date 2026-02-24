@@ -125,8 +125,8 @@ export const watchlist = pgTable(
     mediaType: text("mediaType").notNull().$type<"movie" | "tv">(),
     status: text("status")
       .notNull()
-      .default("watching")
-      .$type<"watching" | "waiting" | "finished">(),
+      .default("on-my-radar")
+      .$type<"on-my-radar" | "watching" | "waiting" | "finished">(),
     lastWatchedSeason: integer("lastWatchedSeason"),
     lastWatchedEpisode: integer("lastWatchedEpisode"),
     lastWatchedAt: timestamp("lastWatchedAt", { mode: "date" }),

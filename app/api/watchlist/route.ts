@@ -7,7 +7,7 @@ import { z } from "zod";
 const addWatchlistItemSchema = z.object({
   contentId: z.number().int().positive(),
   mediaType: z.enum(["movie", "tv"]),
-  status: z.enum(["watching", "waiting", "finished"]).optional(),
+  status: z.enum(["on-my-radar", "watching", "waiting", "finished"]).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         contentId: validatedData.contentId,
         mediaType: validatedData.mediaType,
-        status: validatedData.status || "watching",
+        status: validatedData.status || "on-my-radar",
       })
       .returning();
 

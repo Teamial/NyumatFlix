@@ -5,8 +5,6 @@ import { WatchlistClient } from "./watchlist-client";
 import { Metadata } from "next";
 import { fetchAndEnrichMediaItems } from "../actions";
 import { MediaItem } from "@/utils/typings";
-import { StaticHero } from "@/components/hero/carousel-static";
-import { ContentContainer } from "@/components/layout/content-container";
 
 export const metadata: Metadata = {
   title: "My Watchlist | NyumatFlix",
@@ -85,16 +83,12 @@ export default async function WatchlistPage() {
     };
   });
 
-  // Pass all items to client (client will handle filtering/sorting)
   return (
-    <div className="w-full flex flex-col">
-      <StaticHero imageUrl="/movie-banner.webp" title="" route="" />
-      <ContentContainer className="w-full flex flex-col items-center z-10">
-        <WatchlistClient
-          allItems={itemsWithWatchlist}
-          watchlistItems={watchlistItems}
-        />
-      </ContentContainer>
+    <div className="min-h-screen bg-black">
+      <WatchlistClient
+        allItems={itemsWithWatchlist}
+        watchlistItems={watchlistItems}
+      />
     </div>
   );
 }

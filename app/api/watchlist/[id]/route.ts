@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const updateWatchlistItemSchema = z.object({
-  status: z.enum(["watching", "waiting", "finished"]).optional(),
+  status: z.enum(["on-my-radar", "watching", "waiting", "finished"]).optional(),
   lastWatchedSeason: z.number().int().positive().nullable().optional(),
   lastWatchedEpisode: z.number().int().positive().nullable().optional(),
 });
@@ -43,7 +43,7 @@ export async function PATCH(
 
     // Update the item
     const updateData: {
-      status?: "watching" | "waiting" | "finished";
+      status?: "on-my-radar" | "watching" | "waiting" | "finished";
       lastWatchedSeason?: number | null;
       lastWatchedEpisode?: number | null;
       lastWatchedAt?: Date;

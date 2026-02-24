@@ -1,152 +1,70 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
-
-export type SortOption = "recently-watched" | "new-episodes" | "recently-added";
-export type StatusFilter = "all" | "watching" | "waiting" | "finished";
-export type TypeTab = "all" | "movies" | "tv";
+import { Input } from "@/components/ui/input";
+import { Pencil, Search, X } from "lucide-react";
+import { SortDropdown, type SortKey } from "./sort-dropdown";
 
 interface WatchlistControlsProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  sortOption: SortOption;
-  onSortChange: (sort: SortOption) => void;
-  statusFilter: StatusFilter;
-  onStatusFilterChange: (filter: StatusFilter) => void;
-  typeTab: TypeTab;
-  onTypeTabChange: (tab: TypeTab) => void;
+  globalSort: SortKey;
+  onSortChange: (sort: SortKey) => void;
+  editMode: boolean;
+  onEditModeToggle: () => void;
+  totalCount: number;
 }
 
 export function WatchlistControls({
   searchQuery,
   onSearchChange,
-  sortOption,
+  globalSort,
   onSortChange,
-  statusFilter,
-  onStatusFilterChange,
-  typeTab,
-  onTypeTabChange,
+  editMode,
+  onEditModeToggle,
 }: WatchlistControlsProps) {
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search your watchlist..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 pr-10"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => onSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label="Clear search"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Controls Row */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <label
-              htmlFor="sort-select"
-              className="text-sm text-muted-foreground whitespace-nowrap"
+    <div className="sticky top-16 z-40 py-3">
+      <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/[0.03] backdrop-blur-2xl border border-white/[0.05]">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+          <Input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-44 pl-8 pr-7 h-7 text-xs bg-transparent border-0 shadow-none focus-visible:ring-0 placeholder:text-white/25"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+              aria-label="Clear search"
             >
-              Sort by:
-            </label>
-            <Select value={sortOption} onValueChange={onSortChange}>
-              <SelectTrigger id="sort-select" className="w-full sm:w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recently-watched">
-                  Most Recently Watched
-                </SelectItem>
-                <SelectItem value="new-episodes">
-                  New Episodes Available
-                </SelectItem>
-                <SelectItem value="recently-added">Recently Added</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Type Tabs (moved here for better grouping on mobile) */}
-          <Tabs
-            value={typeTab}
-            onValueChange={(value) => onTypeTabChange(value as TypeTab)}
-            className="w-full sm:w-auto"
-          >
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="all" className="flex-1 sm:flex-none">
-                All
-              </TabsTrigger>
-              <TabsTrigger value="movies" className="flex-1 sm:flex-none">
-                Movies
-              </TabsTrigger>
-              <TabsTrigger value="tv" className="flex-1 sm:flex-none">
-                TV Shows
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
-        {/* Status Filter Buttons */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full lg:w-auto">
-          <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-block">
-            Status:
-          </span>
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button
-              variant={statusFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onStatusFilterChange("all")}
-              className="flex-1 sm:flex-none"
-            >
-              All
-            </Button>
-            <Button
-              variant={statusFilter === "watching" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onStatusFilterChange("watching")}
-              className="flex-1 sm:flex-none"
-            >
-              Watching
-            </Button>
-            <Button
-              variant={statusFilter === "waiting" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onStatusFilterChange("waiting")}
-              className="flex-1 sm:flex-none"
-            >
-              Waiting
-            </Button>
-            <Button
-              variant={statusFilter === "finished" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onStatusFilterChange("finished")}
-              className="flex-1 sm:flex-none"
-            >
-              Finished
-            </Button>
-          </div>
-        </div>
+        <div className="h-4 w-px bg-white/[0.08]" />
+
+        <SortDropdown value={globalSort} onChange={onSortChange} />
+
+        <div className="h-4 w-px bg-white/[0.08]" />
+
+        <Button
+          variant={editMode ? "default" : "ghost"}
+          size="sm"
+          onClick={onEditModeToggle}
+          className={`h-7 px-2.5 gap-1 text-xs rounded-full ${
+            editMode
+              ? ""
+              : "text-white/40 hover:text-white/70 hover:bg-white/[0.06]"
+          }`}
+        >
+          <Pencil className="h-3 w-3" />
+          {editMode ? "Done" : "Edit"}
+        </Button>
       </div>
     </div>
   );

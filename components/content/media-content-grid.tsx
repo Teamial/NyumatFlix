@@ -275,7 +275,7 @@ interface MediaContentGridProps {
   /** Optional callback for status change */
   onStatusChange?: (
     itemId: string,
-    newStatus: "watching" | "waiting" | "finished",
+    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
   ) => void;
   /** Optional map of episode info by contentId */
   episodeInfoMap?: Map<number, EpisodeInfo | null>;
