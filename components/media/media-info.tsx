@@ -93,10 +93,14 @@ export const Info = ({
         title={title}
         align={align}
         size={compactLogo ? "small" : "medium"}
-        className={compactLogo ? "mb-0.5 w-full max-w-[160px]" : "mb-1 max-w-[200px]"}
+        className={
+          compactLogo ? "mb-0.5 w-full max-w-[160px]" : "mb-1 max-w-[200px]"
+        }
         fallbackClassName={cn(
           "leading-tight line-clamp-2 text-balance font-semibold",
-          compactLogo ? "mb-0.5 text-xs" : "mb-1 text-sm sm:text-base md:text-lg",
+          compactLogo
+            ? "mb-0.5 text-xs"
+            : "mb-1 text-sm sm:text-base md:text-lg",
         )}
       />
 

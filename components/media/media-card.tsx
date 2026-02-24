@@ -223,7 +223,6 @@ export const MediaCard = ({
               strokeWidth={1.5}
             />
           </div>
-
         </div>
       </div>
 
