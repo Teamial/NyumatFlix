@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  CheckCircle2,
-  Clock,
-  Eye,
-  Radar,
-  X,
-} from "lucide-react";
+import { CheckCircle2, Clock, Eye, Radar, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 type WatchlistStatus = "on-my-radar" | "watching" | "waiting" | "finished";
@@ -17,10 +11,26 @@ const STATUS_OPTIONS: {
   label: string;
   icon: React.ReactNode;
 }[] = [
-  { value: "on-my-radar", label: "Radar", icon: <Radar className="h-3.5 w-3.5" /> },
-  { value: "watching", label: "Watching", icon: <Eye className="h-3.5 w-3.5" /> },
-  { value: "waiting", label: "Waiting", icon: <Clock className="h-3.5 w-3.5" /> },
-  { value: "finished", label: "Finished", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+  {
+    value: "on-my-radar",
+    label: "Radar",
+    icon: <Radar className="h-3.5 w-3.5" />,
+  },
+  {
+    value: "watching",
+    label: "Watching",
+    icon: <Eye className="h-3.5 w-3.5" />,
+  },
+  {
+    value: "waiting",
+    label: "Waiting",
+    icon: <Clock className="h-3.5 w-3.5" />,
+  },
+  {
+    value: "finished",
+    label: "Finished",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+  },
 ];
 
 interface BatchActionBarProps {

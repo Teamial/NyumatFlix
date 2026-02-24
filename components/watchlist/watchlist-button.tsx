@@ -27,10 +27,22 @@ const SECTION_OPTIONS: {
   label: string;
   icon: React.ReactNode;
 }[] = [
-  { value: "on-my-radar", label: "On My Radar", icon: <Radar className="h-4 w-4" /> },
+  {
+    value: "on-my-radar",
+    label: "On My Radar",
+    icon: <Radar className="h-4 w-4" />,
+  },
   { value: "watching", label: "Watching", icon: <Eye className="h-4 w-4" /> },
-  { value: "waiting", label: "Waiting for New Episodes", icon: <Clock className="h-4 w-4" /> },
-  { value: "finished", label: "Finished", icon: <CheckCircle2 className="h-4 w-4" /> },
+  {
+    value: "waiting",
+    label: "Waiting for New Episodes",
+    icon: <Clock className="h-4 w-4" />,
+  },
+  {
+    value: "finished",
+    label: "Finished",
+    icon: <CheckCircle2 className="h-4 w-4" />,
+  },
 ];
 
 interface WatchlistButtonProps {
@@ -168,7 +180,10 @@ export function WatchlistButton({
       >
         <BookmarkCheck className="h-4 w-4" />
         {children && (
-          <span className="ml-2 text-sm font-medium" data-testid="watchlist-button-text">
+          <span
+            className="ml-2 text-sm font-medium"
+            data-testid="watchlist-button-text"
+          >
             {children}
           </span>
         )}
@@ -191,14 +206,19 @@ export function WatchlistButton({
           data-media-type={mediaType}
           onClick={() => {
             if (!session.data?.user?.id) {
-              toast.error("To add items to your watchlist, you must be logged in.");
+              toast.error(
+                "To add items to your watchlist, you must be logged in.",
+              );
               return;
             }
           }}
         >
           <Icon className="h-4 w-4" />
           {children && (
-            <span className="ml-2 text-sm font-medium" data-testid="watchlist-button-text">
+            <span
+              className="ml-2 text-sm font-medium"
+              data-testid="watchlist-button-text"
+            >
               {children}
             </span>
           )}

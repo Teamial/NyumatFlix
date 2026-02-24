@@ -92,7 +92,12 @@ export async function checkAndUpdateWaitingStatus(
       )
       .limit(1);
 
-    if (!item || item.status === "finished" || item.status === "waiting" || item.status === "on-my-radar") {
+    if (
+      !item ||
+      item.status === "finished" ||
+      item.status === "waiting" ||
+      item.status === "on-my-radar"
+    ) {
       return; // Don't auto-update if already finished, waiting, or on radar
     }
 

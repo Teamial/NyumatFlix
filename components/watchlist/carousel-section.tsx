@@ -5,14 +5,9 @@ import type { EpisodeInfo } from "@/app/watchlist/episode-check-service";
 import { MediaCard } from "@/components/media/media-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import type { Genre, MediaItem } from "@/utils/typings";
+import type { MediaItem } from "@/utils/typings";
 import { getAirDate, getTitle } from "@/utils/typings";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Grid3X3,
-  Rows3,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Grid3X3, Rows3 } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -44,13 +39,6 @@ function getYear(item: MediaItem): number {
   if (!dateStr) return 0;
   const parsed = new Date(dateStr).getFullYear();
   return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function getGenreNames(item: MediaItem): string[] {
-  if ("genres" in item && Array.isArray(item.genres)) {
-    return (item.genres as Genre[]).map((g) => g.name);
-  }
-  return [];
 }
 
 export function CarouselSection({
@@ -115,7 +103,9 @@ export function CarouselSection({
     const el = scrollRef.current;
     if (!el) return;
     const amount = el.clientWidth * 0.75;
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     el.scrollBy({
       left: dir === "left" ? -amount : amount,
       behavior: prefersReducedMotion ? "instant" : "smooth",
@@ -135,7 +125,9 @@ export function CarouselSection({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2.5">
             <span className="text-[hsl(204,88%,53%)]">{icon}</span>
-            <h2 className="text-lg font-semibold text-white tracking-tight">{title}</h2>
+            <h2 className="text-lg font-semibold text-white tracking-tight">
+              {title}
+            </h2>
           </div>
           <span className="text-[11px] font-medium text-white/40 tabular-nums">
             {items.length}
@@ -284,8 +276,11 @@ function CarouselCard({
       <div
         className={cn(
           "rounded-lg overflow-hidden transition-all duration-200 bg-neutral-950 border border-white/[0.04]",
-          editMode && selected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-          !editMode && "hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/40",
+          editMode &&
+            selected &&
+            "ring-2 ring-primary ring-offset-2 ring-offset-background",
+          !editMode &&
+            "hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/40",
         )}
         style={{ aspectRatio: "2/3" }}
       >

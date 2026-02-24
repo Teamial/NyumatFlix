@@ -47,11 +47,7 @@ export function GenreDropdown({
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        className="w-56 p-2"
-        align="start"
-        sideOffset={8}
-      >
+      <PopoverContent className="w-56 p-2" align="start" sideOffset={8}>
         <div className="max-h-64 overflow-y-auto space-y-0.5">
           {genres.map((genre) => {
             const isSelected = selectedGenres.includes(genre);
@@ -67,7 +63,9 @@ export function GenreDropdown({
                   className="pointer-events-none h-3.5 w-3.5"
                   tabIndex={-1}
                 />
-                <span className={cn(isSelected && "text-foreground font-medium")}>
+                <span
+                  className={cn(isSelected && "text-foreground font-medium")}
+                >
                   {genre}
                 </span>
               </button>

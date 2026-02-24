@@ -224,77 +224,6 @@ export const MediaCard = ({
             />
           </div>
 
-          {watchlistItem && onStatusChange && (
-            <div
-              className={cn(
-                "absolute z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300",
-                compact
-                  ? "bottom-0 left-0 right-0"
-                  : "top-3 right-3",
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <ToggleGroup
-                type="single"
-                value={watchlistItem.status}
-                onValueChange={handleStatusChange}
-                className={cn(
-                  "bg-black/70 backdrop-blur-xl border border-white/10 shadow-2xl",
-                  compact
-                    ? "w-full rounded-none border-x-0 border-b-0 p-0.5 gap-0 justify-stretch"
-                    : "rounded-lg p-1",
-                )}
-              >
-                <ToggleGroupItem
-                  value="watching"
-                  aria-label="Watching"
-                  size="sm"
-                  className={cn(
-                    "font-bold uppercase tracking-wider rounded-md transition-all",
-                    compact
-                      ? "flex-1 px-0 py-1 text-[8px] h-auto min-w-0"
-                      : "px-2.5 py-1 text-[10px]",
-                    watchlistItem.status === "watching" &&
-                      "bg-primary text-primary-foreground shadow-lg",
-                  )}
-                >
-                  {compact ? "Watch" : "Watching"}
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="waiting"
-                  aria-label="Waiting"
-                  size="sm"
-                  className={cn(
-                    "font-bold uppercase tracking-wider rounded-md transition-all",
-                    compact
-                      ? "flex-1 px-0 py-1 text-[8px] h-auto min-w-0"
-                      : "px-2.5 py-1 text-[10px]",
-                    watchlistItem.status === "waiting" &&
-                      "bg-primary text-primary-foreground shadow-lg",
-                  )}
-                >
-                  Wait
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  value="finished"
-                  aria-label="Finished"
-                  size="sm"
-                  className={cn(
-                    "font-bold uppercase tracking-wider rounded-md transition-all",
-                    compact
-                      ? "flex-1 px-0 py-1 text-[8px] h-auto min-w-0"
-                      : "px-2.5 py-1 text-[10px]",
-                    watchlistItem.status === "finished" &&
-                      "bg-primary text-primary-foreground shadow-lg",
-                  )}
-                >
-                  {compact ? "Done" : "Finished"}
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          )}
         </div>
       </div>
 
@@ -302,6 +231,7 @@ export const MediaCard = ({
         <Info
           title={title}
           logo={item.logo}
+          compactLogo={compact}
           releaseDate={releaseDate}
           voteAverage={voteAverage && voteAverage > 0 ? voteAverage : undefined}
           runtime={runtime}
@@ -318,6 +248,64 @@ export const MediaCard = ({
               mediaType="tv"
               episodeInfo={episodeInfo || null}
             />
+          </div>
+        )}
+        {watchlistItem && onStatusChange && (
+          <div
+            className="mt-2"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <ToggleGroup
+              type="single"
+              value={watchlistItem.status}
+              onValueChange={handleStatusChange}
+              className={cn(
+                "bg-black/50 backdrop-blur-xl border border-white/10 rounded-lg p-0.5 shadow-2xl w-full justify-stretch",
+                compact && "gap-0",
+              )}
+            >
+              <ToggleGroupItem
+                value="watching"
+                aria-label="Watching"
+                size="sm"
+                className={cn(
+                  "flex-1 min-w-0 px-1 py-1 text-[8px] font-bold uppercase tracking-wider rounded-md transition-all h-auto",
+                  !compact && "sm:text-[9px] sm:px-2",
+                  watchlistItem.status === "watching" &&
+                    "bg-primary text-primary-foreground shadow-lg",
+                )}
+              >
+                Watching
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="waiting"
+                aria-label="Waiting"
+                size="sm"
+                className={cn(
+                  "flex-1 min-w-0 px-1 py-1 text-[8px] font-bold uppercase tracking-wider rounded-md transition-all h-auto",
+                  !compact && "sm:text-[9px] sm:px-2",
+                  watchlistItem.status === "waiting" &&
+                    "bg-primary text-primary-foreground shadow-lg",
+                )}
+              >
+                Waiting
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="finished"
+                aria-label="Finished"
+                size="sm"
+                className={cn(
+                  "flex-1 min-w-0 px-1 py-1 text-[8px] font-bold uppercase tracking-wider rounded-md transition-all h-auto",
+                  !compact && "sm:text-[9px] sm:px-2",
+                  watchlistItem.status === "finished" &&
+                    "bg-primary text-primary-foreground shadow-lg",
+                )}
+              >
+                Finished
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         )}
       </CardContent>

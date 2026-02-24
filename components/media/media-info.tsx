@@ -34,6 +34,8 @@ interface InfoProps {
   mediaType?: "movie" | "tv";
   /** Optional content rating (e.g., PG-13, R, etc.) */
   rating?: string;
+  /** Use smaller logo sizing for compact card contexts */
+  compactLogo?: boolean;
   /**
    * Alignment of the content
    * @default "left"
@@ -56,6 +58,7 @@ export const Info = ({
   genres,
   mediaType = "movie",
   rating,
+  compactLogo,
   align = "left",
 }: InfoProps) => {
   const formatDate = (dateString?: string) => {
@@ -89,8 +92,12 @@ export const Info = ({
         logo={logo}
         title={title}
         align={align}
-        className="mb-1 max-w-[200px]"
-        fallbackClassName="mb-1 text-sm sm:text-base md:text-lg font-semibold leading-tight line-clamp-2 text-balance"
+        size={compactLogo ? "small" : "medium"}
+        className={compactLogo ? "mb-0.5 w-full max-w-[160px]" : "mb-1 max-w-[200px]"}
+        fallbackClassName={cn(
+          "leading-tight line-clamp-2 text-balance font-semibold",
+          compactLogo ? "mb-0.5 text-xs" : "mb-1 text-sm sm:text-base md:text-lg",
+        )}
       />
 
       <div className="flex items-center gap-2 text-[11px] sm:text-xs text-muted-foreground/80 font-medium flex-wrap justify-center">

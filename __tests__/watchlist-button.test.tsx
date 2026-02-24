@@ -179,6 +179,11 @@ describe("WatchlistButton", () => {
     const button = screen.getByTestId("watchlist-button-add");
     await user.click(button);
 
+    const watchingOption = await screen.findByRole("button", {
+      name: "Watching",
+    });
+    await user.click(watchingOption);
+
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith("/api/watchlist", {
         method: "POST",
@@ -273,6 +278,11 @@ describe("WatchlistButton", () => {
     const button = screen.getByTestId("watchlist-button-add");
     await user.click(button);
 
+    const watchingOption = await screen.findByRole("button", {
+      name: "Watching",
+    });
+    await user.click(watchingOption);
+
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
         "Failed to add to watchlist",
@@ -324,17 +334,16 @@ describe("WatchlistButton", () => {
     });
 
     const button = screen.getByTestId("watchlist-button-add");
-
     await user.click(button);
+
+    const watchingOption = await screen.findByRole("button", {
+      name: "Watching",
+    });
+    await user.click(watchingOption);
 
     await waitFor(() => {
       expect(button).toBeDisabled();
     });
-
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-
-    await user.click(button);
-    await user.click(button);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
 

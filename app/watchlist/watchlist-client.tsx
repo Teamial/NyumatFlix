@@ -126,7 +126,8 @@ export function WatchlistClient({
 
   // Split into 4 sections by status
   const onMyRadarItems = useMemo(
-    () => searchFiltered.filter((i) => i.watchlistItem.status === "on-my-radar"),
+    () =>
+      searchFiltered.filter((i) => i.watchlistItem.status === "on-my-radar"),
     [searchFiltered],
   );
   const watchingItems = useMemo(
@@ -155,7 +156,10 @@ export function WatchlistClient({
       setAllItems((prev) =>
         prev.map((item) =>
           item.watchlistItem.id === itemId
-            ? { ...item, watchlistItem: { ...item.watchlistItem, status: newStatus } }
+            ? {
+                ...item,
+                watchlistItem: { ...item.watchlistItem, status: newStatus },
+              }
             : item,
         ),
       );
@@ -181,7 +185,10 @@ export function WatchlistClient({
         setAllItems((prev) =>
           prev.map((item) =>
             item.watchlistItem.id === itemId
-              ? { ...item, watchlistItem: { ...item.watchlistItem, status: oldStatus } }
+              ? {
+                  ...item,
+                  watchlistItem: { ...item.watchlistItem, status: oldStatus },
+                }
               : item,
           ),
         );
@@ -220,7 +227,10 @@ export function WatchlistClient({
       setAllItems((prev) =>
         prev.map((item) =>
           ids.includes(item.watchlistItem.id)
-            ? { ...item, watchlistItem: { ...item.watchlistItem, status: newStatus } }
+            ? {
+                ...item,
+                watchlistItem: { ...item.watchlistItem, status: newStatus },
+              }
             : item,
         ),
       );
@@ -250,7 +260,9 @@ export function WatchlistClient({
 
       const failures = results.filter((r) => r.status === "rejected");
       if (failures.length > 0) {
-        toast.error(`${failures.length} update${failures.length > 1 ? "s" : ""} failed, reverting`);
+        toast.error(
+          `${failures.length} update${failures.length > 1 ? "s" : ""} failed, reverting`,
+        );
         setAllItems(oldAllItems);
         setWatchlistItems(oldWatchlistItems);
       }
@@ -267,12 +279,33 @@ export function WatchlistClient({
 
   const statusCounts = useMemo(
     () => [
-      { label: "On Radar", count: onMyRadarItems.length, icon: <Radar className="h-3.5 w-3.5" /> },
-      { label: "Watching", count: watchingItems.length, icon: <Eye className="h-3.5 w-3.5" /> },
-      { label: "Waiting", count: waitingItems.length, icon: <Clock className="h-3.5 w-3.5" /> },
-      { label: "Finished", count: finishedItems.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+      {
+        label: "On Radar",
+        count: onMyRadarItems.length,
+        icon: <Radar className="h-3.5 w-3.5" />,
+      },
+      {
+        label: "Watching",
+        count: watchingItems.length,
+        icon: <Eye className="h-3.5 w-3.5" />,
+      },
+      {
+        label: "Waiting",
+        count: waitingItems.length,
+        icon: <Clock className="h-3.5 w-3.5" />,
+      },
+      {
+        label: "Finished",
+        count: finishedItems.length,
+        icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+      },
     ],
-    [onMyRadarItems.length, watchingItems.length, waitingItems.length, finishedItems.length],
+    [
+      onMyRadarItems.length,
+      watchingItems.length,
+      waitingItems.length,
+      finishedItems.length,
+    ],
   );
 
   if (watchlistItems.length === 0) {
@@ -319,7 +352,9 @@ export function WatchlistClient({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] text-xs text-white/50"
               >
                 <span className="text-[hsl(204,88%,53%)]/60">{s.icon}</span>
-                <span className="font-semibold text-white/80 tabular-nums">{s.count}</span>
+                <span className="font-semibold text-white/80 tabular-nums">
+                  {s.count}
+                </span>
                 <span>{s.label}</span>
               </div>
             ))}
@@ -397,7 +432,9 @@ export function WatchlistClient({
 
           {searchFiltered.length === 0 && searchQuery.trim() && (
             <div className="text-center py-16 text-white/40">
-              <p className="text-lg font-medium">No items match &ldquo;{searchQuery}&rdquo;</p>
+              <p className="text-lg font-medium">
+                No items match &ldquo;{searchQuery}&rdquo;
+              </p>
               <button
                 onClick={() => setSearchQuery("")}
                 className="text-[hsl(204,88%,53%)] hover:underline mt-2 text-sm"
