@@ -13,6 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { EpisodeIndicator } from "@/components/watchlist/episode-indicator";
 import type { WatchlistItem } from "@/app/watchlist/actions";
+import { isWatchlistStatus, type WatchlistStatus } from "@/app/watchlist/types";
 import type { EpisodeInfo } from "@/app/watchlist/episode-check-service";
 
 interface MovieDetails {
@@ -44,10 +45,7 @@ interface MediaCardProps {
   /** Optional watchlist item for status toggle */
   watchlistItem?: WatchlistItem;
   /** Optional callback for status change */
-  onStatusChange?: (
-    itemId: string,
-    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
-  ) => void;
+  onStatusChange?: (itemId: string, newStatus: WatchlistStatus) => void;
   /** Optional episode info for TV shows */
   episodeInfo?: EpisodeInfo | null;
 }
@@ -170,17 +168,12 @@ export const MediaCard = ({
   };
 
   const handleStatusChange = (newStatus: string) => {
-    if (
-      watchlistItem &&
-      onStatusChange &&
-      (newStatus === "on-my-radar" ||
-        newStatus === "watching" ||
-        newStatus === "waiting" ||
-        newStatus === "finished")
-    ) {
-      onStatusChange(watchlistItem.id, newStatus);
-    }
+    if (!watchlistItem || !onStatusChange) return;
+    if (!isWatchlistStatus(newStatus)) return;
+    onStatusChange(watchlistItem.id, newStatus);
   };
+
+  const showStatusControls = watchlistItem?.status === "on-my-radar";
 
   if (minimal) {
     return <MinimalMediaCard item={item} />;
@@ -225,7 +218,12 @@ export const MediaCard = ({
           </div>
           {watchlistItem && onStatusChange && (
             <div
-              className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className={cn(
+                "absolute top-2 right-2 z-30 transition-opacity duration-300",
+                showStatusControls
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100",
+              )}
               onClick={(e) => {
                 e.stopPropagation();
               }}

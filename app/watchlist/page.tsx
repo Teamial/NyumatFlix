@@ -1,15 +1,57 @@
 import { auth } from "@/auth";
+import { db, userPreferences } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getUserWatchlist } from "./actions";
 import { WatchlistClient } from "./watchlist-client";
 import { Metadata } from "next";
 import { fetchAndEnrichMediaItems } from "../actions";
 import { MediaItem } from "@/utils/typings";
+import type { WatchProgressData } from "@/app/watchlist/types";
 
 export const metadata: Metadata = {
   title: "My Watchlist | NyumatFlix",
   description: "Manage your watchlist and track your viewing progress",
 };
+
+type SeasonLike = { season_number?: number; episode_count?: number | null };
+
+function sumEpisodes(seasons: SeasonLike[]): number {
+  return seasons
+    .filter((s) => typeof s.season_number === "number" && s.season_number > 0)
+    .reduce(
+      (sum, s) =>
+        sum + (typeof s.episode_count === "number" ? s.episode_count : 0),
+      0,
+    );
+}
+
+function computeCumulativeEpisodes(
+  lastWatchedSeason: number | null,
+  lastWatchedEpisode: number | null,
+  seasons: SeasonLike[] | null,
+): number {
+  if (!lastWatchedSeason || !lastWatchedEpisode) return 0;
+  if (!seasons || seasons.length === 0) return 0;
+
+  let watched = 0;
+  for (const s of seasons) {
+    if (typeof s.season_number !== "number" || s.season_number <= 0) continue;
+    const epCount = typeof s.episode_count === "number" ? s.episode_count : 0;
+    if (s.season_number < lastWatchedSeason) {
+      watched += epCount;
+      continue;
+    }
+    if (s.season_number === lastWatchedSeason) {
+      watched += Math.max(
+        0,
+        Math.min(lastWatchedEpisode, epCount || lastWatchedEpisode),
+      );
+      break;
+    }
+  }
+  return watched;
+}
 
 export default async function WatchlistPage() {
   const session = await auth();
@@ -18,7 +60,19 @@ export default async function WatchlistPage() {
     redirect("/login");
   }
 
-  const watchlistItems = await getUserWatchlist();
+  const [watchlistItems, prefsResult] = await Promise.all([
+    getUserWatchlist(),
+    db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, session.user.id))
+      .limit(1)
+      .catch(() => []),
+  ]);
+
+  const savedViewMode =
+    (prefsResult[0]?.watchlistViewMode as "list" | "grid" | "compact") ??
+    "list";
 
   // Fetch media details for each watchlist item
   const mediaItems = await Promise.all(
@@ -83,11 +137,46 @@ export default async function WatchlistPage() {
     };
   });
 
+  const itemsWithProgress = itemsWithWatchlist.map((item) => {
+    if (item.watchlistItem.mediaType !== "tv") {
+      return item;
+    }
+
+    const seasonsRaw: unknown = (item as { seasons?: unknown }).seasons;
+    const seasons: SeasonLike[] | null = Array.isArray(seasonsRaw)
+      ? (seasonsRaw as SeasonLike[])
+      : null;
+
+    const totalEpisodes = seasons
+      ? sumEpisodes(seasons)
+      : typeof (item as { number_of_episodes?: unknown }).number_of_episodes ===
+          "number"
+        ? ((item as { number_of_episodes?: number }).number_of_episodes ?? 0)
+        : 0;
+
+    const watchedEpisodes = computeCumulativeEpisodes(
+      item.watchlistItem.lastWatchedSeason,
+      item.watchlistItem.lastWatchedEpisode,
+      seasons,
+    );
+
+    const progressData: WatchProgressData = {
+      watchedEpisodes:
+        item.watchlistItem.status === "finished" && totalEpisodes > 0
+          ? totalEpisodes
+          : watchedEpisodes,
+      totalEpisodes,
+    };
+
+    return { ...item, progressData };
+  });
+
   return (
     <div className="min-h-screen bg-black">
       <WatchlistClient
-        allItems={itemsWithWatchlist}
+        allItems={itemsWithProgress}
         watchlistItems={watchlistItems}
+        initialViewMode={savedViewMode}
       />
     </div>
   );

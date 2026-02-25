@@ -112,6 +112,17 @@ export const authenticators = pgTable(
   ],
 );
 
+export const userPreferences = pgTable("user_preferences", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  watchlistViewMode: text("watchlistViewMode")
+    .$type<"list" | "grid" | "compact">()
+    .notNull()
+    .default("list"),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const watchlist = pgTable(
   "watchlist",
   {

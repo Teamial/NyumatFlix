@@ -4,16 +4,14 @@ import { MediaContentGrid } from "@/components/content/media-content-grid";
 import { MediaItem } from "@/utils/typings";
 import { WatchlistItem } from "@/app/watchlist/actions";
 import { EpisodeInfo } from "@/app/watchlist/episode-check-service";
+import type { WatchlistStatus } from "@/app/watchlist/types";
 
 interface WatchlistSectionProps {
   title: string;
   items: Array<MediaItem & { watchlistItem: WatchlistItem }>;
   watchlistItemsMap: Map<number, WatchlistItem>;
   episodeInfoMap: Map<number, EpisodeInfo | null>;
-  onStatusChange: (
-    itemId: string,
-    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
-  ) => void;
+  onStatusChange: (itemId: string, newStatus: WatchlistStatus) => void;
 }
 
 export function WatchlistSection({

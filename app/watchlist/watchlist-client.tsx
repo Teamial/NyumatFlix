@@ -1,12 +1,23 @@
 "use client";
 
 import type { EpisodeInfo } from "@/app/watchlist/episode-check-service";
+import type {
+  WatchProgressData,
+  WatchlistFilterKey,
+  WatchlistStatus,
+} from "@/app/watchlist/types";
+import { sortWatchlistItems } from "@/app/watchlist/sort";
 import { Button } from "@/components/ui/button";
 import { BatchActionBar } from "@/components/watchlist/batch-action-bar";
 import { CarouselSection } from "@/components/watchlist/carousel-section";
-import { WatchlistControls } from "@/components/watchlist/watchlist-controls";
+import { DashboardCard } from "@/components/watchlist/dashboard-card";
+import {
+  WatchlistControls,
+  type ViewMode,
+} from "@/components/watchlist/watchlist-controls";
 import type { SortKey } from "@/components/watchlist/sort-dropdown";
-import { getTitle, type MediaItem } from "@/utils/typings";
+import { cn } from "@/lib/utils";
+import { getGenreNames, getTitle, type MediaItem } from "@/utils/typings";
 import {
   Bookmark,
   BookmarkCheck,
@@ -20,8 +31,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { WatchlistItem } from "./actions";
-
-type WatchlistStatus = "on-my-radar" | "watching" | "waiting" | "finished";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MediaCard } from "@/components/media/media-card";
 
 const DummyWatchlistButton = () => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
@@ -44,26 +55,42 @@ const DummyWatchlistButton = () => {
 };
 
 interface WatchlistClientProps {
-  allItems: Array<MediaItem & { watchlistItem: WatchlistItem }>;
+  allItems: Array<
+    MediaItem & {
+      watchlistItem: WatchlistItem;
+      progressData?: WatchProgressData;
+    }
+  >;
   watchlistItems: WatchlistItem[];
+  initialViewMode?: ViewMode;
 }
 
 export function WatchlistClient({
   allItems: initialAllItems,
   watchlistItems: initialWatchlistItems,
+  initialViewMode = "list",
 }: WatchlistClientProps) {
   const [allItems, setAllItems] = useState(initialAllItems);
   const [watchlistItems, setWatchlistItems] = useState(initialWatchlistItems);
 
-  // Global controls
   const [searchQuery, setSearchQuery] = useState("");
   const [globalSort, setGlobalSort] = useState<SortKey>("default");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [activeFilter, setActiveFilter] = useState<WatchlistFilterKey>("all");
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
 
-  // Edit / batch selection mode
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+    fetch("/api/user/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ watchlistViewMode: mode }),
+    }).catch(() => undefined);
+  }, []);
+
   const [editMode, setEditMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-  // Episode data
   const [episodeData, setEpisodeData] = useState<Record<number, EpisodeInfo>>(
     {},
   );
@@ -115,7 +142,6 @@ export function WatchlistClient({
     return map;
   }, [episodeData]);
 
-  // Global search filter applied before splitting into sections
   const searchFiltered = useMemo(() => {
     if (!searchQuery.trim()) return allItems;
     const query = searchQuery.toLowerCase();
@@ -124,24 +150,73 @@ export function WatchlistClient({
     );
   }, [allItems, searchQuery]);
 
-  // Split into 4 sections by status
+  const availableGenres = useMemo(() => {
+    const seen = new Set<string>();
+    for (const item of allItems) {
+      for (const name of getGenreNames(item)) {
+        if (name) seen.add(name);
+      }
+    }
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  }, [allItems]);
+
+  const handleToggleGenre = useCallback((genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre],
+    );
+  }, []);
+
+  const handleClearGenres = useCallback(() => {
+    setSelectedGenres([]);
+  }, []);
+
+  const genreFiltered = useMemo(() => {
+    if (selectedGenres.length === 0) return searchFiltered;
+    const selected = new Set(selectedGenres);
+    return searchFiltered.filter((item) =>
+      getGenreNames(item).some((g) => selected.has(g)),
+    );
+  }, [searchFiltered, selectedGenres]);
+
+  const statusFiltered = useMemo(() => {
+    if (activeFilter === "all") return genreFiltered;
+    return genreFiltered.filter((i) => i.watchlistItem.status === activeFilter);
+  }, [genreFiltered, activeFilter]);
+
+  const sorted = useMemo(() => {
+    return sortWatchlistItems(statusFiltered, globalSort);
+  }, [statusFiltered, globalSort]);
+
   const onMyRadarItems = useMemo(
-    () =>
-      searchFiltered.filter((i) => i.watchlistItem.status === "on-my-radar"),
-    [searchFiltered],
+    () => genreFiltered.filter((i) => i.watchlistItem.status === "on-my-radar"),
+    [genreFiltered],
   );
   const watchingItems = useMemo(
-    () => searchFiltered.filter((i) => i.watchlistItem.status === "watching"),
-    [searchFiltered],
+    () => genreFiltered.filter((i) => i.watchlistItem.status === "watching"),
+    [genreFiltered],
   );
   const waitingItems = useMemo(
-    () => searchFiltered.filter((i) => i.watchlistItem.status === "waiting"),
-    [searchFiltered],
+    () => genreFiltered.filter((i) => i.watchlistItem.status === "waiting"),
+    [genreFiltered],
   );
   const finishedItems = useMemo(
-    () => searchFiltered.filter((i) => i.watchlistItem.status === "finished"),
-    [searchFiltered],
+    () => genreFiltered.filter((i) => i.watchlistItem.status === "finished"),
+    [genreFiltered],
   );
+
+  const allWatchingCount = useMemo(
+    () => allItems.filter((i) => i.watchlistItem.status === "watching").length,
+    [allItems],
+  );
+  const allFinishedCount = useMemo(
+    () => allItems.filter((i) => i.watchlistItem.status === "finished").length,
+    [allItems],
+  );
+
+  const completionPercentage = useMemo(() => {
+    if (allItems.length === 0) return 0;
+    return Math.round((allFinishedCount / allItems.length) * 100);
+  }, [allItems.length, allFinishedCount]);
 
   const handleStatusChange = useCallback(
     async (itemId: string, newStatus: WatchlistStatus) => {
@@ -152,7 +227,6 @@ export function WatchlistClient({
 
       const oldStatus = itemToUpdate.watchlistItem.status;
 
-      // Optimistic update
       setAllItems((prev) =>
         prev.map((item) =>
           item.watchlistItem.id === itemId
@@ -205,11 +279,8 @@ export function WatchlistClient({
   const handleToggleSelect = useCallback((itemId: string) => {
     setSelectedItems((prev) => {
       const next = new Set(prev);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
       return next;
     });
   }, []);
@@ -219,11 +290,9 @@ export function WatchlistClient({
       const ids = [...selectedItems];
       if (ids.length === 0) return;
 
-      // Snapshot for rollback
       const oldAllItems = [...allItems];
       const oldWatchlistItems = [...watchlistItems];
 
-      // Optimistic update all selected
       setAllItems((prev) =>
         prev.map((item) =>
           ids.includes(item.watchlistItem.id)
@@ -245,7 +314,6 @@ export function WatchlistClient({
 
       toast.success(`Moved ${ids.length} item${ids.length > 1 ? "s" : ""}`);
 
-      // Fire PATCH requests
       const results = await Promise.allSettled(
         ids.map((id) =>
           fetch(`/api/watchlist/${id}`, {
@@ -271,40 +339,54 @@ export function WatchlistClient({
   );
 
   const handleEditModeToggle = useCallback(() => {
-    if (editMode) {
-      setSelectedItems(new Set());
-    }
+    if (editMode) setSelectedItems(new Set());
     setEditMode((prev) => !prev);
   }, [editMode]);
 
-  const statusCounts = useMemo(
+  const statusCounts: {
+    key: WatchlistFilterKey;
+    label: string;
+    count: number;
+    icon: React.ReactNode;
+  }[] = useMemo(
     () => [
       {
-        label: "On Radar",
-        count: onMyRadarItems.length,
-        icon: <Radar className="h-3.5 w-3.5" />,
+        key: "all",
+        label: "All",
+        count: genreFiltered.length,
+        icon: null,
       },
       {
+        key: "watching",
         label: "Watching",
         count: watchingItems.length,
-        icon: <Eye className="h-3.5 w-3.5" />,
+        icon: <Eye className="h-3 w-3" />,
       },
       {
+        key: "waiting",
         label: "Waiting",
         count: waitingItems.length,
-        icon: <Clock className="h-3.5 w-3.5" />,
+        icon: <Clock className="h-3 w-3" />,
       },
       {
+        key: "finished",
         label: "Finished",
         count: finishedItems.length,
-        icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+        icon: <CheckCircle2 className="h-3 w-3" />,
+      },
+      {
+        key: "on-my-radar",
+        label: "Radar",
+        count: onMyRadarItems.length,
+        icon: <Radar className="h-3 w-3" />,
       },
     ],
     [
-      onMyRadarItems.length,
+      genreFiltered.length,
       watchingItems.length,
       waitingItems.length,
       finishedItems.length,
+      onMyRadarItems.length,
     ],
   );
 
@@ -336,101 +418,197 @@ export function WatchlistClient({
     );
   }
 
+  const isDashboardView = viewMode === "list";
+  const isGridView = viewMode === "grid";
+
   return (
-    <div className="relative w-full min-h-screen">
-      {/* Cinematic header area */}
-      <div className="relative pt-28 pb-8 px-4 sm:px-6">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[hsl(204,88%,53%)]/[0.07] rounded-full blur-[120px] pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-            My Watchlist
-          </h1>
-          <div className="flex items-center gap-1.5 mt-5 flex-wrap">
-            {statusCounts.map((s) => (
-              <div
-                key={s.label}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] text-xs text-white/50"
-              >
-                <span className="text-[hsl(204,88%,53%)]/60">{s.icon}</span>
-                <span className="font-semibold text-white/80 tabular-nums">
-                  {s.count}
-                </span>
-                <span>{s.label}</span>
-              </div>
-            ))}
-          </div>
+    <div className="relative w-full min-h-screen pt-24">
+      <div className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-white/[0.08]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+          <WatchlistControls
+            title="Dashboard"
+            completionPercentage={completionPercentage}
+            statusCounts={statusCounts}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            availableGenres={availableGenres}
+            selectedGenres={selectedGenres}
+            onGenreToggle={handleToggleGenre}
+            onGenreClearAll={handleClearGenres}
+            globalSort={globalSort}
+            onSortChange={setGlobalSort}
+            editMode={editMode}
+            onEditModeToggle={handleEditModeToggle}
+            totalCount={allItems.length}
+            finishedCount={allFinishedCount}
+            watchingCount={allWatchingCount}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+          />
         </div>
       </div>
 
-      {/* Sticky controls */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <WatchlistControls
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          globalSort={globalSort}
-          onSortChange={setGlobalSort}
-          editMode={editMode}
-          onEditModeToggle={handleEditModeToggle}
-          totalCount={watchlistItems.length}
-        />
-      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
+        <div className="mt-6">
+          {isDashboardView && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sorted.map((item) => (
+                <div key={item.watchlistItem.id} className="relative">
+                  {editMode && (
+                    <div
+                      className="absolute top-3 left-3 z-40"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={selectedItems.has(item.watchlistItem.id)}
+                        onCheckedChange={() =>
+                          handleToggleSelect(item.watchlistItem.id)
+                        }
+                        className={cn(
+                          "h-5 w-5 rounded border-2 bg-black/60 backdrop-blur-sm",
+                          selectedItems.has(item.watchlistItem.id)
+                            ? "border-primary"
+                            : "border-white/40",
+                        )}
+                      />
+                    </div>
+                  )}
+                  <DashboardCard
+                    item={item}
+                    episodeInfo={episodeInfoMap.get(item.id) ?? undefined}
+                    onStatusChange={handleStatusChange}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
-      {/* Sections */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
-        <div className="space-y-14 mt-10">
-          <CarouselSection
-            title="On My Radar"
-            icon={<Radar className="h-5 w-5" />}
-            items={onMyRadarItems}
-            globalSort={globalSort}
-            watchlistItemsMap={watchlistItemsMap}
-            episodeInfoMap={episodeInfoMap}
-            onStatusChange={handleStatusChange}
-            editMode={editMode}
-            selectedItems={selectedItems}
-            onToggleSelect={handleToggleSelect}
-          />
+          {isGridView && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {sorted.map((item) => {
+                const watchlistItem = item.id
+                  ? watchlistItemsMap.get(item.id)
+                  : undefined;
+                const episodeInfo = item.id
+                  ? episodeInfoMap.get(item.id)
+                  : undefined;
+                return (
+                  <div
+                    key={item.watchlistItem.id}
+                    className="relative group/card"
+                  >
+                    {editMode && (
+                      <div
+                        className="absolute top-2 left-2 z-40"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedItems.has(item.watchlistItem.id)}
+                          onCheckedChange={() =>
+                            handleToggleSelect(item.watchlistItem.id)
+                          }
+                          className={cn(
+                            "h-5 w-5 rounded border-2 bg-black/60 backdrop-blur-sm",
+                            selectedItems.has(item.watchlistItem.id)
+                              ? "border-primary"
+                              : "border-white/40",
+                          )}
+                        />
+                      </div>
+                    )}
+                    <div
+                      className={cn(
+                        "rounded-lg overflow-hidden transition-all duration-200 bg-neutral-950 border border-white/[0.04]",
+                        editMode &&
+                          selectedItems.has(item.watchlistItem.id) &&
+                          "ring-2 ring-primary ring-offset-2 ring-offset-background",
+                        !editMode &&
+                          "hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/40",
+                      )}
+                      style={{ aspectRatio: "2/3" }}
+                    >
+                      <MediaCard
+                        item={item}
+                        type={item.watchlistItem.mediaType}
+                        rating={item.content_rating || undefined}
+                        watchlistItem={editMode ? undefined : watchlistItem}
+                        onStatusChange={
+                          editMode ? undefined : handleStatusChange
+                        }
+                        episodeInfo={episodeInfo}
+                        compact
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-          <CarouselSection
-            title="Watching"
-            icon={<Eye className="h-5 w-5" />}
-            items={watchingItems}
-            globalSort={globalSort}
-            watchlistItemsMap={watchlistItemsMap}
-            episodeInfoMap={episodeInfoMap}
-            onStatusChange={handleStatusChange}
-            editMode={editMode}
-            selectedItems={selectedItems}
-            onToggleSelect={handleToggleSelect}
-          />
+          {viewMode === "compact" && (
+            <div className="space-y-8 mt-2">
+              {(activeFilter === "all" || activeFilter === "on-my-radar") && (
+                <CarouselSection
+                  title="On My Radar"
+                  icon={<Radar className="h-5 w-5" />}
+                  items={onMyRadarItems}
+                  globalSort={globalSort}
+                  watchlistItemsMap={watchlistItemsMap}
+                  episodeInfoMap={episodeInfoMap}
+                  onStatusChange={handleStatusChange}
+                  editMode={editMode}
+                  selectedItems={selectedItems}
+                  onToggleSelect={handleToggleSelect}
+                />
+              )}
+              {(activeFilter === "all" || activeFilter === "watching") && (
+                <CarouselSection
+                  title="Watching"
+                  icon={<Eye className="h-5 w-5" />}
+                  items={watchingItems}
+                  globalSort={globalSort}
+                  watchlistItemsMap={watchlistItemsMap}
+                  episodeInfoMap={episodeInfoMap}
+                  onStatusChange={handleStatusChange}
+                  editMode={editMode}
+                  selectedItems={selectedItems}
+                  onToggleSelect={handleToggleSelect}
+                />
+              )}
+              {(activeFilter === "all" || activeFilter === "waiting") && (
+                <CarouselSection
+                  title="Waiting for New Episodes"
+                  icon={<Clock className="h-5 w-5" />}
+                  items={waitingItems}
+                  globalSort={globalSort}
+                  watchlistItemsMap={watchlistItemsMap}
+                  episodeInfoMap={episodeInfoMap}
+                  onStatusChange={handleStatusChange}
+                  editMode={editMode}
+                  selectedItems={selectedItems}
+                  onToggleSelect={handleToggleSelect}
+                />
+              )}
+              {(activeFilter === "all" || activeFilter === "finished") && (
+                <CarouselSection
+                  title="Finished"
+                  icon={<CheckCircle2 className="h-5 w-5" />}
+                  items={finishedItems}
+                  globalSort={globalSort}
+                  watchlistItemsMap={watchlistItemsMap}
+                  episodeInfoMap={episodeInfoMap}
+                  onStatusChange={handleStatusChange}
+                  editMode={editMode}
+                  selectedItems={selectedItems}
+                  onToggleSelect={handleToggleSelect}
+                />
+              )}
+            </div>
+          )}
 
-          <CarouselSection
-            title="Waiting for New Episodes"
-            icon={<Clock className="h-5 w-5" />}
-            items={waitingItems}
-            globalSort={globalSort}
-            watchlistItemsMap={watchlistItemsMap}
-            episodeInfoMap={episodeInfoMap}
-            onStatusChange={handleStatusChange}
-            editMode={editMode}
-            selectedItems={selectedItems}
-            onToggleSelect={handleToggleSelect}
-          />
-
-          <CarouselSection
-            title="Finished"
-            icon={<CheckCircle2 className="h-5 w-5" />}
-            items={finishedItems}
-            globalSort={globalSort}
-            watchlistItemsMap={watchlistItemsMap}
-            episodeInfoMap={episodeInfoMap}
-            onStatusChange={handleStatusChange}
-            editMode={editMode}
-            selectedItems={selectedItems}
-            onToggleSelect={handleToggleSelect}
-          />
-
-          {searchFiltered.length === 0 && searchQuery.trim() && (
+          {sorted.length === 0 && searchQuery.trim() && (
             <div className="text-center py-16 text-white/40">
               <p className="text-lg font-medium">
                 No items match &ldquo;{searchQuery}&rdquo;
@@ -443,6 +621,33 @@ export function WatchlistClient({
               </button>
             </div>
           )}
+
+          {sorted.length === 0 &&
+            !searchQuery.trim() &&
+            activeFilter !== "all" && (
+              <div className="text-center py-16 text-white/40">
+                <p className="text-lg font-medium">No items in this category</p>
+                <button
+                  onClick={() => setActiveFilter("all")}
+                  className="text-[hsl(204,88%,53%)] hover:underline mt-2 text-sm"
+                >
+                  Show all items
+                </button>
+              </div>
+            )}
+        </div>
+
+        {/* Discover CTA */}
+        <div className="mt-8 flex justify-center">
+          <Button
+            asChild
+            className="bg-primary text-white px-10 py-5 rounded-2xl font-bold hover:scale-105 active:scale-95 shadow-2xl shadow-primary/30 border border-primary/50 transition-all h-auto"
+          >
+            <Link href="/movies" className="flex items-center gap-3">
+              <Film className="h-5 w-5" />
+              Discover New Favorites
+            </Link>
+          </Button>
         </div>
       </div>
 

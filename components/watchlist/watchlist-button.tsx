@@ -1,6 +1,7 @@
 "use client";
 
 import { getWatchlistItem } from "@/app/watchlist/actions";
+import type { WatchlistStatus } from "@/app/watchlist/types";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -19,8 +20,6 @@ import {
 import { useSession } from "next-auth/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
-
-type WatchlistStatus = "on-my-radar" | "watching" | "waiting" | "finished";
 
 const SECTION_OPTIONS: {
   value: WatchlistStatus;

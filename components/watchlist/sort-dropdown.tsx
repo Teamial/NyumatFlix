@@ -26,7 +26,7 @@ interface SortDropdownProps {
 export function SortDropdown({ value, onChange }: SortDropdownProps) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as SortKey)}>
-      <SelectTrigger className="w-[160px] h-9 text-xs border-white/[0.1]">
+      <SelectTrigger className="flex-1 md:flex-none md:w-[160px] h-11 text-xs bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition-colors">
         <SelectValue placeholder="Sort by..." />
       </SelectTrigger>
       <SelectContent>

@@ -2,6 +2,7 @@
 
 import type { WatchlistItem } from "@/app/watchlist/actions";
 import type { EpisodeInfo } from "@/app/watchlist/episode-check-service";
+import type { WatchlistStatus } from "@/app/watchlist/types";
 import {
   ContentGrid,
   type ContentItem,
@@ -273,10 +274,7 @@ interface MediaContentGridProps {
   /** Optional map of watchlist items by contentId */
   watchlistItemsMap?: Map<number, WatchlistItem>;
   /** Optional callback for status change */
-  onStatusChange?: (
-    itemId: string,
-    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
-  ) => void;
+  onStatusChange?: (itemId: string, newStatus: WatchlistStatus) => void;
   /** Optional map of episode info by contentId */
   episodeInfoMap?: Map<number, EpisodeInfo | null>;
 }

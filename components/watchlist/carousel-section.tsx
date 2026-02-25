@@ -1,12 +1,13 @@
 "use client";
 
 import type { WatchlistItem } from "@/app/watchlist/actions";
+import type { WatchlistStatus } from "@/app/watchlist/types";
 import type { EpisodeInfo } from "@/app/watchlist/episode-check-service";
+import { sortWatchlistItems } from "@/app/watchlist/sort";
 import { MediaCard } from "@/components/media/media-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { MediaItem } from "@/utils/typings";
-import { getAirDate, getTitle } from "@/utils/typings";
 import { ChevronLeft, ChevronRight, Grid3X3, Rows3 } from "lucide-react";
 import {
   useCallback,
@@ -25,20 +26,10 @@ export interface CarouselSectionProps {
   globalSort: SortKey;
   watchlistItemsMap: Map<number, WatchlistItem>;
   episodeInfoMap: Map<number, EpisodeInfo | null>;
-  onStatusChange: (
-    itemId: string,
-    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
-  ) => void;
+  onStatusChange: (itemId: string, newStatus: WatchlistStatus) => void;
   editMode: boolean;
   selectedItems: Set<string>;
   onToggleSelect: (itemId: string) => void;
-}
-
-function getYear(item: MediaItem): number {
-  const dateStr = getAirDate(item);
-  if (!dateStr) return 0;
-  const parsed = new Date(dateStr).getFullYear();
-  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 export function CarouselSection({
@@ -59,24 +50,7 @@ export function CarouselSection({
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const sorted = useMemo(() => {
-    const result = [...items];
-
-    switch (globalSort) {
-      case "a-z":
-        result.sort((a, b) => getTitle(a).localeCompare(getTitle(b)));
-        break;
-      case "z-a":
-        result.sort((a, b) => getTitle(b).localeCompare(getTitle(a)));
-        break;
-      case "newest":
-        result.sort((a, b) => getYear(b) - getYear(a));
-        break;
-      case "oldest":
-        result.sort((a, b) => getYear(a) - getYear(b));
-        break;
-    }
-
-    return result;
+    return sortWatchlistItems(items, globalSort);
   }, [items, globalSort]);
 
   const checkScroll = useCallback(() => {
@@ -233,10 +207,7 @@ interface CarouselCardProps {
   item: MediaItem & { watchlistItem: WatchlistItem };
   watchlistItemsMap: Map<number, WatchlistItem>;
   episodeInfoMap: Map<number, EpisodeInfo | null>;
-  onStatusChange: (
-    itemId: string,
-    newStatus: "on-my-radar" | "watching" | "waiting" | "finished",
-  ) => void;
+  onStatusChange: (itemId: string, newStatus: WatchlistStatus) => void;
   editMode: boolean;
   selected: boolean;
   onToggleSelect: () => void;

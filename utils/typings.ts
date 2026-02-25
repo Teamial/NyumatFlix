@@ -403,6 +403,29 @@ export function getAirDate(item: MediaItem): string | undefined {
     .otherwise(() => undefined);
 }
 
+export function getYear(item: MediaItem): number {
+  const dateStr = getAirDate(item);
+  if (!dateStr) return 0;
+  const parsed = new Date(dateStr).getFullYear();
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+export function getGenreNames(item: MediaItem, limit?: number): string[] {
+  const genres: unknown =
+    "genres" in item && Array.isArray((item as { genres?: unknown }).genres)
+      ? (item as { genres?: unknown }).genres
+      : null;
+
+  const names = Array.isArray(genres)
+    ? genres
+        .map((g) => (typeof g === "object" && g && "name" in g ? g.name : null))
+        .filter((n): n is string => typeof n === "string" && n.length > 0)
+    : [];
+
+  const unique = [...new Set(names)];
+  return typeof limit === "number" ? unique.slice(0, limit) : unique;
+}
+
 const seasonPattern = {
   id: P.number,
   name: P.string,

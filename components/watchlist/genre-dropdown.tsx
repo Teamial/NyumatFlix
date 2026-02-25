@@ -34,8 +34,8 @@ export function GenreDropdown({
           variant="outline"
           size="sm"
           className={cn(
-            "h-8 gap-1.5 text-xs font-medium border-white/10 bg-transparent",
-            hasActive && "border-primary/50 text-primary",
+            "h-11 gap-1.5 text-xs font-medium border-white/10 bg-white/5 hover:bg-white/10 rounded-xl",
+            hasActive && "border-primary/40 text-primary",
           )}
         >
           Genre

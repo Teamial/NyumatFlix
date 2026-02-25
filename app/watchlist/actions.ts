@@ -114,11 +114,37 @@ export async function checkAndUpdateWaitingStatus(
     }
 
     // Check if user has watched all available episodes
-    const totalEpisodes = tvShowDetails.number_of_episodes || 0;
-    const lastWatchedEpisode = item.lastWatchedEpisode || 0;
+    const seasons = Array.isArray(tvShowDetails.seasons)
+      ? tvShowDetails.seasons
+      : [];
+    const totalEpisodes =
+      seasons.length > 0
+        ? seasons
+            .filter((s) => s.season_number > 0)
+            .reduce((sum, s) => sum + (s.episode_count ?? 0), 0)
+        : (tvShowDetails.number_of_episodes ?? 0);
+
+    const lastWatchedSeason = item.lastWatchedSeason ?? 0;
+    const lastWatchedEpisode = item.lastWatchedEpisode ?? 0;
+
+    const cumulativeWatched =
+      lastWatchedSeason > 0 && lastWatchedEpisode > 0
+        ? seasons
+            .filter((s) => s.season_number > 0)
+            .reduce((sum, s) => {
+              if (s.season_number < lastWatchedSeason) {
+                return sum + (s.episode_count ?? 0);
+              }
+              if (s.season_number === lastWatchedSeason) {
+                const epCount = s.episode_count ?? lastWatchedEpisode;
+                return sum + Math.min(lastWatchedEpisode, epCount);
+              }
+              return sum;
+            }, 0)
+        : 0;
 
     // If user has watched all episodes and show is not ended, mark as waiting
-    if (lastWatchedEpisode >= totalEpisodes && totalEpisodes > 0) {
+    if (cumulativeWatched >= totalEpisodes && totalEpisodes > 0) {
       await db
         .update(watchlist)
         .set({

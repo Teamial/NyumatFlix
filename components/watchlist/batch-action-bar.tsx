@@ -1,10 +1,9 @@
 "use client";
 
+import type { WatchlistStatus } from "@/app/watchlist/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, Eye, Radar, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-
-type WatchlistStatus = "on-my-radar" | "watching" | "waiting" | "finished";
 
 const STATUS_OPTIONS: {
   value: WatchlistStatus;
